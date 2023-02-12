@@ -28,10 +28,10 @@ class UnavailableUnit(Exception):
 # Data structure to store unit info
 # Keys are unit names, vacd ..lue is a dict in the form:
 #     {'factor': <factor>, 'qty': <quantity>, 'aliases': []}
-units = {}
+_units = {}
 
 # Keys are aliases, values are primary unit name
-aliases = {}
+_aliases = {}
 
 # https://www.nist.gov/pml/owm/metric-si/si-units
 # Quantity construction is a list of two lists containing the units in the
@@ -43,7 +43,7 @@ aliases = {}
 # The worst bit of nonsense below is making force a fundamental base unit and
 # defining mass in terms of force (m=F/a). This is convenient in order to
 # seemlessly convert between newtons, pounds, grams, etc. as "normal" people expect.
-quantities = {
+_quantities = {
     # Fundamental quantiies
     #   Used to define any other unit that will be converted to/from
     #   or will interact with other units.
@@ -98,7 +98,7 @@ quantities = {
 }
 
 # The first unit added in any quantity becomes the default for that unit
-defaults = {}
+_defaults = {}
 
 # key: unique signature of every quantity
 # value: quantity name
@@ -117,7 +117,7 @@ def _gen_signature(constr):
 
 
 def _make_signatures():
-    for qty, constr in quantities.items():
+    for qty, constr in _quantities.items():
         _signatures[_gen_signature(constr)] = qty
 
 
@@ -333,10 +333,10 @@ def _parse_unit(name, expand=True):
 
 def _get_unit(unit):
     """Returns unit dict, handling aliases too"""
-    if unit in units:
-        return units[unit]
-    elif unit in aliases:
-        return units[aliases[unit]]
+    if unit in _units:
+        return _units[unit]
+    elif unit in _aliases:
+        return _units[_aliases[unit]]
     else:
         raise UnavailableUnit(f"Unit {unit} is not defined.")
 
@@ -345,8 +345,8 @@ def _get_unit_name(unit_str, ignore_error=False):
     """Returns unit name, handling aliases too"""
     num, denom = _parse_unit(unit_str, expand=True)
     try:
-        num_values = [u if u in units else aliases[u] for u in num]
-        denom_values = [u if u in units else aliases[u] for u in denom]
+        num_values = [u if u in _units else _aliases[u] for u in num]
+        denom_values = [u if u in _units else _aliases[u] for u in denom]
     except KeyError:
         if not ignore_error:
             raise UnavailableUnit(f"Unit {unit_str} is not defined.")
@@ -379,31 +379,35 @@ def add_unit(qty, unit, alias_list, factor, factor_unit):
     """
     if factor_unit:
         factor *= _get_factors(factor_unit)
-    units[unit] = {'factor': factor, 'qty': qty, 'aliases': alias_list.split()}
-    if qty not in defaults:
-        defaults[qty] = unit
+    _units[unit] = {
+        'factor': factor,
+        'qty': qty,
+        'aliases': alias_list.split()
+    }
+    if qty not in _defaults:
+        _defaults[qty] = unit
     # add SI prefixes for certain units
     if unit in _prefix_units:
         for mult, prefix in zip(_prefix_mult, _prefixes):
-            units[prefix + unit] = {
+            _units[prefix + unit] = {
                 'factor': mult * factor,
                 'qty': qty,
                 'aliases': []
             }
             if unit == 'Ω':
-                aliases[prefix + 'ohm'] = prefix + unit
-                units[prefix + unit]['aliases'].append(prefix + 'ohm')
+                _aliases[prefix + 'ohm'] = prefix + unit
+                _units[prefix + unit]['aliases'].append(prefix + 'ohm')
             if prefix == 'μ':
-                aliases['u' + unit] = prefix + unit
-                units[prefix + unit]['aliases'].append('u' + unit)
+                _aliases['u' + unit] = prefix + unit
+                _units[prefix + unit]['aliases'].append('u' + unit)
                 if unit == 'Ω':
-                    aliases['uohm'] = prefix + unit
-                    units[prefix + unit]['aliases'].append('uohm')
-    aliases.update({alias: unit for alias in alias_list.split()})
+                    _aliases['uohm'] = prefix + unit
+                    _units[prefix + unit]['aliases'].append('uohm')
+    _aliases.update({alias: unit for alias in alias_list.split()})
 
 
-for unitinfo in _unit_list:
-    add_unit(*unitinfo)
+for _unitinfo in _unit_list:
+    add_unit(*_unitinfo)
 
 
 def _combine_units(unitlist):
@@ -468,14 +472,14 @@ def _get_construction(fractional_unit, combine=False, listform=False):
     num_constr = [_get_unit(i)['qty'] for i in num]
     denom_constr = [_get_unit(i)['qty'] for i in denom]
     for u in num_constr:
-        if u in quantities:
-            n, d = quantities[u]
+        if u in _quantities:
+            n, d = _quantities[u]
             num_constr.remove(u)
             num_constr.extend(n)
             denom_constr.extend(d)
     for u in denom_constr:
-        if u in quantities:
-            n, d = quantities[u]
+        if u in _quantities:
+            n, d = _quantities[u]
             denom_constr.remove(u)
             num_constr.extend(d)
             denom_constr.extend(n)
@@ -550,7 +554,7 @@ def convert(value, from_unit, to_unit):
 
 def list_quantities():
     """List available quantities"""
-    [print(x) for x in sorted(list(quantities.keys()))]
+    [print(x) for x in sorted(list(_quantities.keys()))]
 
 
 def list_units(qty=[], search=''):
@@ -564,8 +568,8 @@ def list_units(qty=[], search=''):
             the search term.
     """
     if not qty:
-        qty = quantities.keys()
-    for name, unit in units.items():
+        qty = _quantities.keys()
+    for name, unit in _units.items():
         if unit['qty'] in qty:
             if ((not search) or (search in name) or any(
                 (search in x) for x in unit['aliases'])):
@@ -576,25 +580,41 @@ def list_units(qty=[], search=''):
 
 # The below lists are the approved functions that are allowed in
 # math equations during unit imports.
-_mathops = [
-    'acos', 'acosh', 'asin', 'asinh', 'atan', 'atan2', 'atanh', 'cbrt', 'ceil',
-    'comb', 'copysign', 'cos', 'cosh', 'degrees', 'dist', 'e', 'erf', 'erfc',
-    'exp', 'exp2', 'expm1', 'fabs', 'factorial', 'floor', 'fmod', 'frexp',
-    'fsum', 'gamma', 'gcd', 'hypot', 'inf', 'lcm', 'ldexp', 'lgamma', 'log',
-    'log10', 'log1p', 'log2', 'modf', 'perm', 'pi', 'pow', 'prod', 'radians',
-    'remainder', 'sin', 'sinh', 'sqrt', 'tan', 'tanh', 'tau', 'trunc'
-]
 
-_builtinops = [
-    'abs', 'complex', 'divmod', 'float', 'int', 'max', 'min', 'pow', 'range',
-    'reversed', 'round', 'sorted', 'sum'
-]
 
-_available_funcs = {}
-for key in _builtinops:
-    _available_funcs[key] = locals().get(key)
-for key in _mathops:
-    _available_funcs[key] = math.__dict__.get(key)
+def _build_import_funcs():
+    """
+    Create a dictionary of functions that are allowed to be used in equations
+    in imported CSV files. Most math fuctions from the math module and some 
+    from __builtins__ are allowed, and everything else is forbidden.
+
+    Used in conjunction with _import_units() function which actually reads the 
+    CSV and does the eval().
+    """
+    available_funcs = {}
+    mathops = [
+        'acos', 'acosh', 'asin', 'asinh', 'atan', 'atan2', 'atanh', 'cbrt',
+        'ceil', 'comb', 'copysign', 'cos', 'cosh', 'degrees', 'dist', 'e',
+        'erf', 'erfc', 'exp', 'exp2', 'expm1', 'fabs', 'factorial', 'floor',
+        'fmod', 'frexp', 'fsum', 'gamma', 'gcd', 'hypot', 'inf', 'lcm',
+        'ldexp', 'lgamma', 'log', 'log10', 'log1p', 'log2', 'modf', 'perm',
+        'pi', 'pow', 'prod', 'radians', 'remainder', 'sin', 'sinh', 'sqrt',
+        'tan', 'tanh', 'tau', 'trunc'
+    ]
+
+    builtinops = [
+        'abs', 'complex', 'divmod', 'float', 'int', 'max', 'min', 'pow',
+        'range', 'reversed', 'round', 'sorted', 'sum'
+    ]
+
+    for key in builtinops:
+        available_funcs[key] = locals().get(key)
+    for key in mathops:
+        available_funcs[key] = math.__dict__.get(key)
+    return available_funcs
+
+
+_available_funcs = _build_import_funcs()
 
 
 def _import_units(filename):
@@ -629,6 +649,9 @@ def import_units(filename):
         add_unit(*line)
 
 
+#######################################################################
+# Unit Class
+#######################################################################
 class Unit:
     """
     Unit class
@@ -663,11 +686,11 @@ class Unit:
             raise Exception("No arguments given for Unit.")
         elif len(argv) == 1:  # 1, '1', '1 mm', or '1 mm in'
             if isinstance(argv[0], str):
-                value, *units = argv[0].split()
-                if len(units) == 1:  # [1, ['mm']]
-                    unit = units[0]
-                elif len(units) > 1:  # [1, ['mm', 'in']]
-                    unit, to_unit, *_ = units
+                value, *units_str = argv[0].split()
+                if len(units_str) == 1:  # [1, ['mm']]
+                    unit = units_str[0]
+                elif len(units_str) > 1:  # [1, ['mm', 'in']]
+                    unit, to_unit, *_ = units_str
             else:
                 value = argv[0]
         elif len(argv) == 2:
@@ -737,15 +760,15 @@ class Unit:
         return _make_name(num, denom)
 
     def reduce(self,
-               length=defaults['length'],
-               force=defaults['force'],
-               time=defaults['time'],
-               temperature=defaults['temperature'],
-               current=defaults['current'],
-               angle=defaults['angle'],
-               unitless=defaults['unitless'],
-               amount=defaults['amount'],
-               luminous_intensity=defaults['luminous_intensity']):
+               length=_defaults['length'],
+               force=_defaults['force'],
+               time=_defaults['time'],
+               temperature=_defaults['temperature'],
+               current=_defaults['current'],
+               angle=_defaults['angle'],
+               unitless=_defaults['unitless'],
+               amount=_defaults['amount'],
+               luminous_intensity=_defaults['luminous_intensity']):
         """Reduce to fundamental units in terms of given units.
         Default values are used for units, but they can be overridden with the method args.
 
@@ -772,13 +795,13 @@ class Unit:
         """Attempts to find a unit that fits the fundamental quantities of this Unit.
         This does nothing if it can't find a better compound unit to use instead."""
         constr = _get_construction(_parse_unit(self.unit),
-                                      combine=False,
-                                      listform=True)
+                                   combine=False,
+                                   listform=True)
         sig = _gen_signature(constr)
         if sig in _signatures:
             qty = _signatures[sig]
-            if qty in defaults:
-                new_unit = defaults[qty]
+            if qty in _defaults:
+                new_unit = _defaults[qty]
                 self.to(new_unit)
         return self
 

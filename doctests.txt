@@ -34,7 +34,7 @@
 0.166667 blake
 >>> Unit(12*12, 'in', 'blakes')
 2 blake
->>> uc.import_units('docs/customunits.csv')
+>>> uc.import_units('customunits.csv')
 >>> Unit(1, 'myang', 'degrees')
 -0.0140334 °
 >>> Unit('2')**4

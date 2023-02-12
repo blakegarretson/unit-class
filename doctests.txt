@@ -1,0 +1,153 @@
+>>> from unitclass import Unit
+>>> import unitclass as uc
+>>> import math
+>>> Unit(1, 'inch')
+1 in
+>>> Unit(1, 'inch', 'mm')
+25.4 mm
+>>> Unit(1, 'lb', 'kg')
+0.453592 kg
+>>> Unit(10, 'lb', 'kg')
+4.53592 kg
+>>> Unit(10, 'in*lb', 'N*m')
+1.12985 N⋅m
+>>> a = Unit('1 W')/Unit('1 A')
+>>> a
+1 W/A
+>>> a.to('V')
+1 V
+>>> a = Unit('1 W')/Unit('1 A')
+>>> a
+1 W/A
+>>> a.reduce()
+1 N⋅m/A⋅s
+>>> a.simplify()
+1 V
+>>> a = Unit('1 W')/Unit('1 A')
+>>> a
+1 W/A
+>>> a.simplify()
+1 V
+>>> uc.add_unit("length", "blake", "blakes bunits", 6, 'ft')
+>>> c = Unit(12, 'in', 'blakes')
+>>> c
+0.166667 blake
+>>> Unit(12*12, 'in', 'blakes')
+2 blake
+>>> uc.import_units('docs/customunits.csv')
+>>> Unit(1, 'myang', 'degrees')
+-0.0140334 °
+>>> Unit('2')**4
+16
+>>> Unit('2')*4
+8
+>>> Unit('2')/4
+0.5
+>>> Unit('2')-4
+-2
+>>> Unit('2')+4
+6
+>>> 4*Unit('2')
+8
+>>> 4/Unit('2')
+2
+>>> 4-Unit('2')
+2
+>>> 4+Unit('2')
+6
+>>> Unit()
+Traceback (most recent call last):
+    ...
+Exception: No arguments given for Unit.
+>>> Unit(1, 'm', 'mm')
+1000 mm
+>>> Unit(5000, 'N', 'lb')
+1124.04 lb
+>>> Unit(30e6, 'psi', 'MPa')
+206843 MPa
+>>> Unit(1, 'G', 'm/s2')
+9.80665 m/s²
+>>> Unit(1, 'lb', 'kg')
+0.453592 kg
+>>> Unit(1, 'g', 'lbf')
+0.00220462 lb
+>>> Unit(1, 'N', 'g')
+101.972 g
+>>> Unit(40, 'lb/ft3', 'kg/m3')
+640.739 kg/m³
+>>> Unit(40, 'pcf', 'lb/ft3')
+40 lb/ft³
+>>> Unit(40, 'pcf', 'kg/m3')
+640.739 kg/m³
+>>> Unit(1, 'cup', 'tbsp')
+16 tbsp
+>>> Unit(1, 'mL', 'cm3')
+1 cm³
+>>> Unit(1, 'gmi', 'nmi')
+1.0018 nmi
+>>> Unit(1, 'nmi', 'm')
+1852 m
+>>> Unit(1, 'nmi', 'ft')
+6076.12 ft
+>>> Unit(1, 'nmi', 'mi')
+1.15078 mi
+>>> Unit(1, 'ct', 'oz')
+0.00705479 oz
+>>> Unit(1, 'ct', 'mg')
+200 mg
+>>> Unit(1, 'ct', 'troz')
+0.00643015 troz
+>>> Unit(1, 'ozf', 'N')
+0.278014 N
+>>> Unit(1, 'troz', 'grains')
+480 grain
+>>> Unit(60, 'degC', 'degF')
+140 °F
+>>> Unit(72, 'degF', 'degC')
+22.2222 °C
+>>> Unit(0, 'degF', 'degC')
+-17.7778 °C
+>>> Unit(0, 'degC', 'degK')
+273.15 °K
+>>> Unit(0, 'degC', 'degK').to('celsius')
+0 °C
+>>> Unit(1, 'g', 'lbf').to('N')
+0.00980665 N
+>>> Unit(1, 'grams', 'lbf')
+0.00220462 lb
+>>> Unit(1, 'grams')
+1 g
+>>> Unit(2*math.pi, 'rad', 'deg')
+360 °
+>>> Unit(2*math.pi, 'rad', '°')
+360 °
+>>> Unit(180, '°', 'radians')
+3.14159 rad
+>>> Unit(1, 'GB', 'MB')
+1024 MB
+>>> f"{Unit(1, 'MB', 'B'):.0f}"
+'1048576 B'
+>>> Unit(1, 'GB', 'MB')
+1024 MB
+>>> Unit(0.5, 'rpm', 'deg/min')
+180 °/min
+>>> Unit(1, 'rpm', 'deg/sec')
+6 °/s
+>>> (Unit(1, 'in')*4)+5
+9 in
+>>> (Unit('2 in')*4)+5
+13 in
+>>> Unit('9.80665 m/s²').to('ft/s2')
+32.174 ft/s²
+>>> Unit('2')
+2
+>>> Unit('2 mm')
+2 mm
+>>> Unit('2 mm in i')
+0.0787402 in
+>>> Unit('2')*Unit("4 mm")
+8 mm
+>>> Unit('2 mm')*Unit("4")
+8 mm
+>>> 3*Unit('2')
+6

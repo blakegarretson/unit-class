@@ -1,0 +1,2 @@
+length, myin, myinch my_inch, 1/8.0, in
+angle, myang,, 1/1e-12*sin(2*pi), rad

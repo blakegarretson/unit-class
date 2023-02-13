@@ -134,7 +134,7 @@ Once the custom unit is added, it can be used the same as any other built-in uni
 ```
 
 You can also bulk load custom units from a CSV file. The CSV would take the same
-form as the `add_unit()` function above. Here is an example:
+form as the `add_unit()` function above. Here is an example CSV with two custom units:
 
 ```csv
 length, myin, myinch my_inch, 1/8.0, in

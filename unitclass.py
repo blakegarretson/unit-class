@@ -1,10 +1,20 @@
 """
 unitclass: Physical unit class suitable for calculations in the sciences.
 
->>> Unit(1, 'm', 'mm')
-1000 mm
->>> Unit(5000, 'N', 'lb')
-1124.04 lb
+    Copyright (C) 2023  Blake T. Garretson
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
 """
@@ -703,11 +713,13 @@ class Unit:
             self.to(self._validate_unit(to_unit))
 
     def _input2float(self, value):
-        try:
-            value = float(value)
-        except ValueError as e:
-            print(e)
-            exit()
+        """
+        Convert value to float.
+        
+        This method could be replaced with float(), but it's here so error checking
+        can be expanded and made more robust in the future.
+        """
+        value = float(value)
         return value
 
     def _validate_unit(self, unit_str):
@@ -778,6 +790,17 @@ class Unit:
         if they are in different systems.
 
         Changes object in-place, but also returns it for interactive usability
+
+        Examples:
+
+        >>> a = Unit('1 W')/Unit('1 A')
+        >>> a
+        1 W/A
+        >>> a.reduce()
+        1 N⋅m/A⋅s
+        >>> a.reduce(time='ms', force='lb')
+        0.000224809 lb⋅m/A⋅ms
+                        
         """
         constr = _get_construction(_parse_unit(self.unit), combine=True)
 
@@ -964,3 +987,4 @@ if __name__ == '__main__':
     import doctest
     doctest.testmod()
     doctest.testfile('doctests.txt')
+    doctest.testfile('README.md')

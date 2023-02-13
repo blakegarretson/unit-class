@@ -11,10 +11,12 @@ bytes and ppm).
 
 ## Usage Examples
 
-`Unit()` takes strings or numbers and strings. Any number appended to a unit is assumed to be an exponent. e.g. `m2` is `m²` and `in3` is `in³`.
-You can create compound units with `*` and `/` 
-operators, e.g. `N*m` or `ft/min`.
-There should only be one division operator in a unit, but you can have any number of multiplied units on the left and right sides of the division operator. e.g `N*s2/m*kg` is interpreted as $\frac{N \cdot s^2}{m \cdot kg}$.
+`Unit()` takes strings or numbers and strings. Any number appended to a unit is
+assumed to be an exponent. e.g. `m2` is `m²` and `in3` is `in³`. You can create
+compound units with `*` and `/` operators, e.g. `N*m` or `ft/min`. There should
+only be one division operator in a unit, but you can have any number of
+multiplied units on the left and right sides of the division operator. e.g
+`N*s2/m*kg` is interpreted as $\frac{N \cdot s^2}{m \cdot kg}$.
 
 ### Basic Usage
 
@@ -117,7 +119,7 @@ interactive prompt.
 
 In the example below, a custom unit is being added. The unit measures the
 quantity "length", the unit is called "blake", two aliases for that unit are
-"blakes" and "bunits", and 1 blake equals 6 ft. 
+"blakes" and "bunits", and 1 blake equals 6 ft.
 
 The fields are as follows: `<quantity>, <name>, <aliases>, <factor>, <factor unit>`
 

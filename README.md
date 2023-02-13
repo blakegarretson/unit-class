@@ -95,9 +95,9 @@ mph   ->unit of speed      aliases: ['mileperhour']
 
 ```
 
-### Simplifying and Reducing Units
+### Simplifying and Expanding Units
 
-The `reduce()` method reduces the unit to its fundamental units while
+The `expand()` method expands the unit to its fundamental units while
 `simplify()` combines units to a single compound unit if one exists for the
 given combination of units. For all options, type `help(Unit.reduce)` at an
 interactive prompt.
@@ -106,7 +106,7 @@ interactive prompt.
 >>> a = Unit('1 W')/Unit('1 A')
 >>> a
 1 W/A
->>> a.reduce()
+>>> a.expand()
 1 N⋅m/A⋅s
 >>> a.simplify()
 1 V

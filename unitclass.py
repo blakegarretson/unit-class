@@ -771,7 +771,7 @@ class Unit:
 
         return _make_name(num, denom)
 
-    def reduce(self,
+    def expand(self,
                length=_defaults['length'],
                force=_defaults['force'],
                time=_defaults['time'],
@@ -781,7 +781,7 @@ class Unit:
                unitless=_defaults['unitless'],
                amount=_defaults['amount'],
                luminous_intensity=_defaults['luminous_intensity']):
-        """Reduce to fundamental units in terms of given units.
+        """Expand to fundamental units in terms of given units.
         Default values are used for units, but they can be overridden with the method args.
 
         This method is not strictly necessary since you can always use to() method to coerce the
@@ -796,9 +796,9 @@ class Unit:
         >>> a = Unit('1 W')/Unit('1 A')
         >>> a
         1 W/A
-        >>> a.reduce()
+        >>> a.expand()
         1 N⋅m/A⋅s
-        >>> a.reduce(time='ms', force='lb')
+        >>> a.expand(time='ms', force='lb')
         0.000224809 lb⋅m/A⋅ms
                         
         """
@@ -816,7 +816,15 @@ class Unit:
 
     def simplify(self):
         """Attempts to find a unit that fits the fundamental quantities of this Unit.
-        This does nothing if it can't find a better compound unit to use instead."""
+        This does nothing if it can't find a better compound unit to use instead.
+        
+        >>> a = Unit('1 W')/Unit('1 A')
+        >>> a
+        1 W/A
+        >>> a.simplify()
+        1 V
+
+        """
         constr = _get_construction(_parse_unit(self.unit),
                                    combine=False,
                                    listform=True)

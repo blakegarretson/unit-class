@@ -32,26 +32,55 @@ multiplied units on the left and right sides of the division operator. e.g
 >>> b = Unit(1, 'ft')
 >>> a*12 + b
 24 in
->>> b.to('in') # convert unit
+
+```
+
+#### Exponents
+
+```python
+>>> from unitclass import Unit
+>>> Unit('1 m3')
+1 m³
+>>> Unit('1 in4')
+1 in⁴
+>>> Unit('1 m3').to('in3')
+61023.7 in³
+>>> Unit('10 in2') / Unit('1 in')
+10 in
+
+```
+
+#### Compound Units
+
+```python
+>>> Unit('1 lbf*ft*s2')
+1 lb⋅ft⋅s²
+>>> Unit(100, 'ft/min')
+100 ft/min
+>>> Unit('1 N*s2/m*kg')
+1 N⋅s²/m⋅kg
+>>> Unit(100, 'ft') / Unit(1, 'min')
+100 ft/min
+
+```
+
+#### Conversion
+
+```python
+>>> from unitclass import Unit
+>>> Unit(1, 'in', 'mm') # convert on-the-fly from one unit to another
+25.4 mm
+>>> b = Unit(1, 'ft')
+>>> b.to('in') # convert method
 12 in
 >>> b.to('mm')
 304.8 mm
 >>> Unit('1 N*m').to('in*lb')
 8.85075 in⋅lb
->>> Unit(100, 'ft') / Unit(1, 'min')
-100 ft/min
->>> Unit(100, 'ft/min')
-100 ft/min
 >>> Unit(100, 'ft/min').to('mph') 
 1.13636 mph
 >>> Unit(100, 'ft/min').to('kph')
 1.8288 kph
->>> Unit('1 m3')
-1 m³
->>> Unit('1 m3').to('in3')
-61023.7 in³
->>> Unit('10 in2') / Unit('1 in')
-10 in
 
 ```
 
@@ -82,6 +111,9 @@ EB    ->unit of data       aliases: ['exabyte', 'exabytes']
 
 ```
 
+*Tip: For a list of available quanities, use the function `list_quantities()`.
+Example usage is below in the Custom Unit section.*
+
 And you can search for a certain string in a unit or unit alias:
 
 ```python
@@ -101,8 +133,8 @@ mph   ->unit of speed      aliases: ['mileperhour']
 
 The `expand()` method expands the unit to its fundamental units while
 `simplify()` combines units to a single compound unit if one exists for the
-given combination of units. For all options, type `help(Unit.reduce)` at an
-interactive prompt.
+given combination of units. For all options, type `help(Unit.expand)` or
+`help(Unit.simplify)` at an interactive prompt.
 
 ```python
 >>> a = Unit('1 W')/Unit('1 A')
@@ -115,7 +147,7 @@ interactive prompt.
 
 ```
 
-### Add custom unit
+### Add Custom Unit
 
 In the example below, a custom unit is being added. The unit measures the
 quantity "length", the unit is called "blake", two aliases for that unit are
@@ -137,7 +169,8 @@ Once the custom unit is added, it can be used the same as any other built-in uni
 ```
 
 You can also bulk load custom units from a CSV file. The CSV would take the same
-form as the `add_unit()` function above. Here is an example CSV with two custom units:
+form as the `add_unit()` function above. Here is an example CSV with two custom
+units:
 
 ```csv
 length, myin, myinch my_inch, 1/8.0, in

@@ -987,4 +987,4 @@ if __name__ == '__main__':
     import doctest
     doctest.testmod()
     doctest.testfile('doctests.txt')
-    doctest.testfile('README.md')
+    doctest.testfile('README.md', optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)

@@ -11,7 +11,7 @@ bytes and ppm).
 
 ## Usage Examples
 
-`Unit()` takes strings or numbers and strings. You can create compound units with `*` and `\` 
+`Unit()` takes strings or numbers and strings. You can create compound units with `*` and `/` 
 operators, e.g. `N*m` or `ft/min`. Any number appended to a unit is assumed to be an exponent. e.g. `m2` is `m²` and
 `in3` is `in³`.
 

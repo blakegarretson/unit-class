@@ -180,7 +180,7 @@ _unit_list = [
     ('time', 'fortnight', 'fortnights', 14, 'day'),
     ('time', 'year', 'yr yrs years', 365, 'day'),
     ('length', 'in', 'inch inches "', 25.4, 'mm'),
-    ('length', 'ft', "feet '", 12, 'in'),
+    ('length', 'ft', "feet ' foot", 12, 'in'),
     ('length', 'yd', 'yard yards', 36, 'in'),
     ('length', 'mi', 'mile miles statutemile statutemiles smi', 5280, 'ft'),
     ('length', 'nmi', 'nauticalmile nauticalmiles', 1852, 'm'),

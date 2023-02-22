@@ -143,8 +143,12 @@ Exception: No arguments given for Unit.
 2
 >>> Unit('2 mm')
 2 mm
+>>> Unit('mm')
+1 mm
 >>> Unit('2 mm in i')
-0.0787402 in
+Traceback (most recent call last):
+    ...
+Exception: Too many arguments given: ['2', 'mm', 'in', 'i']
 >>> Unit('2')*Unit("4 mm")
 8 mm
 >>> Unit('2 mm')*Unit("4")

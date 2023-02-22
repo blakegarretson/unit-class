@@ -660,7 +660,9 @@ def import_units(filename):
 
 
 #######################################################################
+#######################################################################
 # Unit Class
+#######################################################################
 #######################################################################
 class Unit:
     """
@@ -694,32 +696,40 @@ class Unit:
 
         if not argv:
             raise Exception("No arguments given for Unit.")
-        elif len(argv) == 1:  # 1, '1', '1 mm', or '1 mm in'
-            if isinstance(argv[0], str):
-                value, *units_str = argv[0].split()
-                if len(units_str) == 1:  # [1, ['mm']]
-                    unit = units_str[0]
-                elif len(units_str) > 1:  # [1, ['mm', 'in']]
-                    unit, to_unit, *_ = units_str
-            else:
-                value = argv[0]
+        elif len(argv) == 1:  # 1, '1', '1 mm', '1 mm in'
+            arg =  argv[0]
+            if isinstance(arg, (float,int)): # -> 1
+                value = arg
+            elif isinstance(arg, str): # -> '1' or 'mm'
+                items = arg.split()
+                if len(items) == 1:
+                    item = items[0]
+                    if all([(i in '0123456789-+.') for i in item]): # is number
+                        value = item
+                    else: # is a unit with no value given
+                        value = 1
+                        unit = item
+                elif len(items) == 2: # -> 1,'mm'
+                    value, unit = items
+                elif len(items) == 3: # -> 1, 'mm', 'in' (convert on the fly)
+                    value, unit, to_unit = items
+                else:
+                    raise Exception(f"Too many arguments given: {items}")
         elif len(argv) == 2:
             value, unit = argv
         else:
             value, unit, to_unit, *_ = argv
         self.unit = self._validate_unit(unit)
-        self.value = self._input2float(value)
+        self.value = self._input2number(value)
         if to_unit:
             self.to(self._validate_unit(to_unit))
 
-    def _input2float(self, value):
+    def _input2number(self, value):
         """
-        Convert value to float.
-        
-        This method could be replaced with float(), but it's here so error checking
-        can be expanded and made more robust in the future.
+        Convert value to float or int.
         """
-        value = float(value)
+        if isinstance(value, str):
+            value = float(value) if '.' in value else int(value)
         return value
 
     def _validate_unit(self, unit_str):

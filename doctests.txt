@@ -155,3 +155,11 @@ Exception: Too many arguments given: ['2', 'mm', 'in', 'i']
 8 mm
 >>> 3*Unit('2')
 6
+>>> Unit('1 %').to('')
+0.01
+>>> Unit('100 %').to('')
+1
+>>> Unit(0.01).to("%")
+1 %
+>>> Unit(0.9).to("pct")
+90 %

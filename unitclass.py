@@ -64,9 +64,9 @@ _quantities = {
     'luminous_intensity': [['luminous_intensity'], []],
     'force': [['force'], []],
     'angle': [['angle'], []],
-    'unitless': [[], []],
+    'unitless': [['unitless'], []],
     # Other special purpose
-    'concentration': [['concentration'], []],
+    'concentration': [['unitless'], []],
     'data': [['data'], []],
     # SI
     'mass': [['force', 'time', 'time'], ['length']],  # force/acceleration
@@ -172,7 +172,7 @@ _unit_list = [
     ('conductance', 'S', 'siemens', 1, ''),
     ('angle', 'rad', 'rads radians radian', 1, ''),
     # Other units below
-    ('unitless', '', '', 1, ''),
+    ('unitless', '', 'unitless _', 1, ''),
     ('time', 'min', 'minute minutes', 60, 's'),
     ('time', 'hr', 'hour hours', 60, 'min'),
     ('time', 'day', 'days', 24, 'hr'),
@@ -285,7 +285,7 @@ _unit_list = [
     ('speed', 'c', 'lightspeed', 299792458, 'm/s'),
     ('speed', 'mach', 'Ma mach_sealevel_15C', 340.3, 'm/s'),
     ('angular speed', 'rpm', 'RPM RPMS rpms', 1, 'rev/min'),
-    ('concentration', 'pct', 'percent percentage', 1, ''),
+    ('concentration', '%', 'pct percent percentage', 0.01, 'unitless'),
     ('concentration', 'ppm', 'partspermillion', 1e-4, 'pct'),
     ('concentration', 'ppb', 'partsperbillion', 1e-7, 'pct'),
     ('fluid_flow', 'gpm', 'galpermin', 1, 'gal/min'),
@@ -542,9 +542,7 @@ def convert(value, from_unit, to_unit):
     # TODO: this doesn't handle compound units with temperature, like J/degC
     both = _get_unit_name(from_unit, ignore_error=True) + \
         _get_unit_name(to_unit, ignore_error=True)
-    if not all([from_unit, to_unit]):  # if one is unitless, no conversion
-        newvalue = value
-    elif both == '°C°F':
+    if both == '°C°F':
         newvalue = _convert_C2F(value)
     elif both == '°F°C':
         newvalue = _convert_F2C(value)

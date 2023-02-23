@@ -64,9 +64,9 @@ _quantities = {
     'luminous_intensity': [['luminous_intensity'], []],
     'force': [['force'], []],
     'angle': [['angle'], []],
-    'unitless': [[], []],
+    'unitless': [['unitless'], []],
     # Other special purpose
-    'concentration': [['concentration'], []],
+    'concentration': [['unitless'], []],
     'data': [['data'], []],
     # SI
     'mass': [['force', 'time', 'time'], ['length']],  # force/acceleration
@@ -172,7 +172,7 @@ _unit_list = [
     ('conductance', 'S', 'siemens', 1, ''),
     ('angle', 'rad', 'rads radians radian', 1, ''),
     # Other units below
-    ('unitless', '', '', 1, ''),
+    ('unitless', '', 'unitless _', 1, ''),
     ('time', 'min', 'minute minutes', 60, 's'),
     ('time', 'hr', 'hour hours', 60, 'min'),
     ('time', 'day', 'days', 24, 'hr'),
@@ -230,6 +230,8 @@ _unit_list = [
     ('volume', 'imp_gill', '', 5, 'imp_floz'),
     ('volume', 'imp_fldram', '', 1 / 8, 'imp_floz'),
     ('area', 'acre', 'acres', 43560, 'ft2'),
+    ('area', 'sqft', 'squarefeet squarefoot', 1, 'ft2'),
+    ('area', 'sqin', 'squareinches', 1, 'in2'),
     ('force', 'dyn', 'dyne dynes', 1e-5, 'N'),
     ('force', 'lb', 'lbf lb_f lbs pound pounds', 4.4482216,
      'N'),  # pound force
@@ -285,7 +287,7 @@ _unit_list = [
     ('speed', 'c', 'lightspeed', 299792458, 'm/s'),
     ('speed', 'mach', 'Ma mach_sealevel_15C', 340.3, 'm/s'),
     ('angular speed', 'rpm', 'RPM RPMS rpms', 1, 'rev/min'),
-    ('concentration', 'pct', 'percent percentage', 1, ''),
+    ('concentration', '%', 'pct percent percentage', 0.01, 'unitless'),
     ('concentration', 'ppm', 'partspermillion', 1e-4, 'pct'),
     ('concentration', 'ppb', 'partsperbillion', 1e-7, 'pct'),
     ('fluid_flow', 'gpm', 'galpermin', 1, 'gal/min'),
@@ -505,18 +507,24 @@ def _get_construction(fractional_unit, combine=False, listform=False):
         return construction
 
 
-def _check_consistent_units(from_unit, to_unit):
-    """Return True if units are fundamentally the same OR if one is unitless"""
+def _check_consistent_units(from_unit, to_unit, silent=False):
+    """Return True if units are fundamentally the same OR if one is unitless
+    
+    arguments are strings, not Unit class"""
     if not all([from_unit, to_unit]):
-        return  # one of the units is unitless, so it's essentially a scalar
+        return True # one of the units is unitless, so it's essentially a scalar
     to_constr = _get_construction(_parse_unit(to_unit))
     from_constr = _get_construction(_parse_unit(from_unit))
     if to_constr != from_constr:
         errstr = f"Error: Units are not consistent.\n" +\
             f"       {from_unit} is {from_constr}\n" +\
             f"       {to_unit} is {to_constr}"
-        raise InconsistentUnitsError(errstr)
-
+        if not silent:
+            raise InconsistentUnitsError(errstr)
+        else:
+            return False
+    else:
+        return True
 
 def _convert_C2F(value):
     return value * 9.0 / 5.0 + 32
@@ -542,9 +550,7 @@ def convert(value, from_unit, to_unit):
     # TODO: this doesn't handle compound units with temperature, like J/degC
     both = _get_unit_name(from_unit, ignore_error=True) + \
         _get_unit_name(to_unit, ignore_error=True)
-    if not all([from_unit, to_unit]):  # if one is unitless, no conversion
-        newvalue = value
-    elif both == '°C°F':
+    if both == '°C°F':
         newvalue = _convert_C2F(value)
     elif both == '°F°C':
         newvalue = _convert_F2C(value)
@@ -660,7 +666,9 @@ def import_units(filename):
 
 
 #######################################################################
+#######################################################################
 # Unit Class
+#######################################################################
 #######################################################################
 class Unit:
     """
@@ -694,32 +702,43 @@ class Unit:
 
         if not argv:
             raise Exception("No arguments given for Unit.")
-        elif len(argv) == 1:  # 1, '1', '1 mm', or '1 mm in'
-            if isinstance(argv[0], str):
-                value, *units_str = argv[0].split()
-                if len(units_str) == 1:  # [1, ['mm']]
-                    unit = units_str[0]
-                elif len(units_str) > 1:  # [1, ['mm', 'in']]
-                    unit, to_unit, *_ = units_str
-            else:
-                value = argv[0]
+        elif len(argv) == 1:  # 1, '1', '1 mm', '1 mm in'
+            arg =  argv[0]
+            if isinstance(arg, Unit): # pass through, if you try to instance a Unit
+                unit = arg.unit
+                value = arg.value
+            elif isinstance(arg, (float,int)): # -> 1
+                value = arg
+            elif isinstance(arg, str): # -> '1' or 'mm'
+                items = arg.split()
+                if len(items) == 1:
+                    item = items[0]
+                    if all([(i in '0123456789-+.') for i in item]): # is number
+                        value = item
+                    else: # is a unit with no value given
+                        value = 1
+                        unit = item
+                elif len(items) == 2: # -> 1,'mm'
+                    value, unit = items
+                elif len(items) == 3: # -> 1, 'mm', 'in' (convert on the fly)
+                    value, unit, to_unit = items
+                else:
+                    raise Exception(f"Too many arguments given: {items}")
         elif len(argv) == 2:
             value, unit = argv
         else:
             value, unit, to_unit, *_ = argv
         self.unit = self._validate_unit(unit)
-        self.value = self._input2float(value)
+        self.value = self._input2number(value)
         if to_unit:
             self.to(self._validate_unit(to_unit))
 
-    def _input2float(self, value):
+    def _input2number(self, value):
         """
-        Convert value to float.
-        
-        This method could be replaced with float(), but it's here so error checking
-        can be expanded and made more robust in the future.
+        Convert value to float or int.
         """
-        value = float(value)
+        if isinstance(value, str):
+            value = float(value) if '.' in value else int(value)
         return value
 
     def _validate_unit(self, unit_str):
@@ -733,12 +752,21 @@ class Unit:
         """
         return _get_unit_name(unit_str.translate(self.from_specials))
 
+    def _tocopy(self, newunit):
+        """Converts and returns a new Unit() copy"""
+        newunit = self._validate_unit(newunit)
+        value = convert(self.value, self.unit, newunit)
+        return Unit(value, newunit)
+    
     def to(self, newunit):
-        """Converts in-place, and returns self for viewing the result in Jupyter immediatelt"""
+        """Converts in-place, and returns self for viewing the result in Jupyter immediately"""
         newunit = self._validate_unit(newunit)
         self.value = convert(self.value, self.unit, newunit)
         self.unit = newunit
         return self
+
+    def _get_construction(self):
+        return _get_construction(_parse_unit(self.unit))
 
     def _new_unit(self, other, op):
         """Get new unit for some math operation.
@@ -878,10 +906,15 @@ class Unit:
             return ""
 
     def __mul__(self, other):
+        other = Unit(other)
+        if all([_check_consistent_units(self.unit, other.unit, silent=True),
+                    (self.unit != other.unit), all( [self.unit,other.unit]) ]):
+            # this ensures we don't have 2in * 3m = 6 in*m
+            # If we have the same fundamental quantity (e.g. length), make them the same
+            # before the operation
+            other = other._tocopy(self.unit)
         newunit = self._new_unit(other, op="mul")
-        if isinstance(other, Unit):
-            other = other.value
-        newvalue = self.value * other  # type: ignore
+        newvalue = self.value * other.value  # type: ignore
         if (not newunit) and (not isinstance(other, Unit)):
             return Unit(newvalue, '')
         return Unit(newvalue, newunit or other.unit)  # type: ignore
@@ -889,23 +922,28 @@ class Unit:
     def __rmul__(self, other):
         return self.__mul__(other)
 
-    def __truediv__(self, other):
-        newunit = self._new_unit(other, op="div")
-        if isinstance(other, Unit):
-            other = other.value
-        newvalue = self.value / other  # type: ignore
-        if (not newunit) and (not isinstance(other, Unit)):
-            return Unit(newvalue, '')
-        return Unit(newvalue, newunit or other.unit)  # type: ignore
+    def __truediv__(self, other, op='div'):
+        other = Unit(other)
+        if all([_check_consistent_units(self.unit, other.unit, silent=True),
+                    (self.unit != other.unit), all( [self.unit,other.unit]) ]):
+            # this ensures we don't have 2in * 3m = 6 in*m
+            # If we have the same fundamental quantity (e.g. length), make them the same
+            # before the operation
+            other = other._tocopy(self.unit)
+        newunit = self._new_unit(other, op=op)
+        newvalue = (self.value / other.value) if op=='div' else (other.value/self.value)
+        new_constr = _get_construction(_parse_unit(newunit))
+        self_constr = self._get_construction()
+        other_constr = other._get_construction()
+        u = Unit(newvalue, newunit or other.unit)
+        if new_constr == self_constr:
+            u.to(self.unit)
+        elif new_constr == other_constr:
+            u.to(other.unit)
+        return u  # type: ignore
 
     def __rtruediv__(self, other):
-        newunit = self._new_unit(other, op="rdiv")
-        if isinstance(other, Unit):
-            other = other.value
-        newvalue = other / self.value  # type: ignore
-        if (not newunit) and (not isinstance(other, Unit)):
-            return Unit(newvalue, '')
-        return Unit(newvalue, newunit or other.unit)  # type: ignore
+        return self.__truediv__(other, op='rdiv')
 
     def __add__(self, other):
         if isinstance(other, Unit):
@@ -996,3 +1034,7 @@ if __name__ == '__main__':
     doctest.testmod()
     doctest.testfile('doctests.txt')
     doctest.testfile('README.md', optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)
+    # print(Unit(4, 'in2')/Unit(50.8,'mm'))
+    # print(Unit(50.8,'mm2')/Unit(4, 'in'))
+    # print(4/Unit('2'))
+    # print(Unit(50.8,'mm')*Unit(4, 'in'))

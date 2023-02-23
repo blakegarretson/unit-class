@@ -143,11 +143,29 @@ Exception: No arguments given for Unit.
 2
 >>> Unit('2 mm')
 2 mm
+>>> Unit('mm')
+1 mm
 >>> Unit('2 mm in i')
-0.0787402 in
+Traceback (most recent call last):
+    ...
+Exception: Too many arguments given: ['2', 'mm', 'in', 'i']
 >>> Unit('2')*Unit("4 mm")
 8 mm
 >>> Unit('2 mm')*Unit("4")
 8 mm
 >>> 3*Unit('2')
 6
+>>> Unit('1 %').to('')
+0.01
+>>> Unit('100 %').to('')
+1
+>>> Unit(0.01).to("%")
+1 %
+>>> Unit(0.9).to("pct")
+90 %
+>>> Unit(2, 'in') * Unit(50.8,'mm')
+4 in²
+>>> Unit(4, 'in2')/Unit(50.8,'mm')
+50.8 mm
+>>> Unit(2580.64,'mm2')/Unit(4, 'in')
+1 in

@@ -1037,4 +1037,4 @@ if __name__ == '__main__':
     # print(Unit(4, 'in2')/Unit(50.8,'mm'))
     # print(Unit(50.8,'mm2')/Unit(4, 'in'))
     # print(4/Unit('2'))
-    print(Unit(50.8,'mm')*Unit(4, 'in'))
+    # print(Unit(50.8,'mm')*Unit(4, 'in'))

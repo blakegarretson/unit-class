@@ -163,3 +163,9 @@ Exception: Too many arguments given: ['2', 'mm', 'in', 'i']
 1 %
 >>> Unit(0.9).to("pct")
 90 %
+>>> Unit(2, 'in') * Unit(50.8,'mm')
+4 in²
+>>> Unit(4, 'in2')/Unit(50.8,'mm')
+50.8 mm
+>>> Unit(2580.64,'mm2')/Unit(4, 'in')
+1 in

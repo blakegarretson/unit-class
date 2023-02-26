@@ -18,7 +18,7 @@ unitclass: Physical unit class suitable for calculations in the sciences.
 
 
 """
-import math, csv, numbers
+import math, csv, numbers, re
 
 g = 9.80665  # standard value of accel of gravity
 
@@ -318,13 +318,80 @@ def _expand_units(unitlist):
             newlist.append(u)
     return newlist
 
-
-def _parse_unit(name, expand=True):
-    """Parse unit and break down to indvidual components
+re_oper = re.compile("(^\(.*?\))|(^(.*?)([*|\/])(.*?)(?=(\(.*?\))|[*\/]|$))"
+                     )  # parens group, or next operator
+def _parse_unit(text, numerator=None, denominator=None, divflip=False, expand=True):
+    """Parse unit str and break down to indvidual components, respecting PEMDAS order 
+    of operations and allowing for parentheses.
     e.g.:
 
-    >>> _parse_unit(name='N*m/s*in')
+    >>> _parse_unit('N*m/(s*in)')
     (['N', 'm'], ['s', 'in'])
+
+    expand: will call _expand_units()
+    """    
+    if not numerator:
+        numerator = []
+    if not denominator:
+        denominator = []
+    text = text.strip()
+    # print("CALL",text, numerator, denominator)
+    if divflip:
+        numerator, denominator = denominator, numerator
+
+    while match := re_oper.search(text):
+        parens = match.group(1)
+        term1 = match.group(3)
+        op = match.group(4)
+        term2 = match.group(5)
+        term2_parens = match.group(6)
+        # print(text, '>>>', op, term1, term2, term2_parens, parens, match.span(), numerator, denominator)
+
+        if op == '*':
+            end = match.end()
+            if term1: numerator.append(term1)
+            if term2: numerator.append(term2)
+            elif term2_parens:
+                numerator, denominator = _parse_unit(
+                    term2_parens[1:-1], numerator, denominator, expand=False)
+                end += len(term2_parens)
+            text = text[end:]
+        elif op == '/':
+            end = match.end()
+            if term1: numerator.append(term1)
+            if term2: denominator.append(term2)
+            elif term2_parens:  # flip num/denom since it's being divided
+                numerator, denominator = _parse_unit(term2_parens[1:-1],
+                                                          numerator,
+                                                          denominator,
+                                                          divflip=True, expand=False)
+                end += len(term2_parens)
+            text = text[end:]
+        elif parens:
+            text = text[match.end():]
+            numerator, denominator = _parse_unit(parens[1:][:-1],
+                                                      numerator, denominator, expand=False)
+    if text:  # just a single term left
+        numerator.append(text)
+        text = ''
+    if divflip:
+        numerator, denominator = denominator, numerator
+    if expand:
+        numerator = _expand_units(numerator)
+        denominator = _expand_units(denominator)
+    return numerator, denominator
+
+def _parse_unit_simple(name, expand=True):
+    """Parse unit str and break down to indvidual components
+    e.g.:
+
+    >>> _parse_unit_simple(name='N*m/s*in')
+    (['N', 'm'], ['s', 'in'])
+
+    NOTE: This is a simplified function. It only allows for one
+        divsion operator and does not folow PEMDAS.
+        Everything on the left side of the division operator is multiplied and is the numerator.
+        Everything on the right side of the division operator is multiplied and is the denominator.
 
     expand: will call _expand_units()
     """
@@ -459,7 +526,7 @@ def _make_name(num, denom, combine=True):
     """Takes list of individual units and combines them
 
     You would want to set 'combine' to False if you want an expanded unit, useful for
-    unit types: force/length*length"""
+    unit types: force/(length*length)"""
     new_num, new_denom = _simplify_unit(num, denom)
     if combine:
         new_num, new_denom = _combine_units(new_num), _combine_units(new_denom)
@@ -471,7 +538,10 @@ def _make_name(num, denom, combine=True):
     elif denom_str == '':
         new_unit = num_str
     else:
-        new_unit = "/".join([num_str, denom_str])
+        if len(new_denom) > 1:
+            new_unit = f"{num_str}/({denom_str})" # parens
+        else:
+            new_unit = f"{num_str}/{denom_str}"
     return new_unit
 
 
@@ -825,9 +895,9 @@ class Unit:
         >>> a
         1 W/A
         >>> a.expand()
-        1 N⋅m/A⋅s
+        1 N⋅m/(A⋅s)
         >>> a.expand(time='ms', force='lb')
-        0.000224809 lb⋅m/A⋅ms
+        0.000224809 lb⋅m/(A⋅ms)
                         
         """
         constr = _get_construction(_parse_unit(self.unit), combine=True)

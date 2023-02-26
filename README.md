@@ -57,8 +57,8 @@ multiplied units on the left and right sides of the division operator. e.g
 1 lb⋅ft⋅s²
 >>> Unit(100, 'ft/min')
 100 ft/min
->>> Unit('1 N*s2/m*kg')
-1 N⋅s²/m⋅kg
+>>> Unit('1 N*s2/(m*kg)')
+1 N⋅s²/(m⋅kg)
 >>> Unit(100, 'ft') / Unit(1, 'min')
 100 ft/min
 
@@ -141,7 +141,7 @@ given combination of units. For all options, type `help(Unit.expand)` or
 >>> a
 1 W/A
 >>> a.expand()
-1 N⋅m/A⋅s
+1 N⋅m/(A⋅s)
 >>> a.simplify()
 1 V
 

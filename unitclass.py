@@ -820,7 +820,7 @@ class Unit:
         - if one of the Unit objects was unitless, it removes the empty string from the name
         - Returns primary name (after replacements)
         """
-        return _get_unit_name(unit_str.translate(self.from_specials))
+        return _get_unit_name(unit_str.translate(self.from_specials).replace('^',''))
 
     def _tocopy(self, newunit):
         """Converts and returns a new Unit() copy"""

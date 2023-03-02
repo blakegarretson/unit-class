@@ -77,10 +77,14 @@ Exception: No arguments given for Unit.
 640.739 kg/m³
 >>> Unit(40, 'pcf', 'lb/ft3')
 40 lb/ft³
+>>> Unit(40, 'pcf', 'lb/ft^3')
+40 lb/ft³
 >>> Unit(40, 'pcf', 'kg/m3')
 640.739 kg/m³
 >>> Unit(1, 'cup', 'tbsp')
 16 tbsp
+>>> Unit(1, 'mL', 'cm^3')
+1 cm³
 >>> Unit(1, 'mL', 'cm3')
 1 cm³
 >>> Unit(1, 'gmi', 'nmi')

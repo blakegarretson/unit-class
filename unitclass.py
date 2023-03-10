@@ -779,7 +779,7 @@ class Unit:
                 value = arg.value
             elif isinstance(arg, (float,int)): # -> 1
                 value = arg
-            elif isinstance(arg, str): # -> '1' or 'mm'
+            elif isinstance(arg, str): # -> '1' or 'mm' or '1 mm' or '1 mm in'
                 items = arg.split()
                 if len(items) == 1:
                     item = items[0]

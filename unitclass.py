@@ -760,10 +760,10 @@ class Unit:
     """
 
     def __init__(self, *argv):
-        self.to_specials = str.maketrans("0123456789*", "⁰¹²³⁴⁵⁶⁷⁸⁹⋅")
+        self.to_specials = str.maketrans("0123456789*", "⁰¹²³⁴⁵⁶⁷⁸⁹·")
         self.from_specials = str.maketrans(
-            "⁰¹²³⁴⁵⁶⁷⁸⁹⋅×",
-            "0123456789**",
+            "⁰¹²³⁴⁵⁶⁷⁸⁹⋅·×",
+            "0123456789***",
         )
 
         value = None
@@ -895,9 +895,9 @@ class Unit:
         >>> a
         1 W/A
         >>> a.expand()
-        1 N⋅m/(A⋅s)
+        1 N·m/(A·s)
         >>> a.expand(time='ms', force='lb')
-        0.000224809 lb⋅m/(A⋅ms)
+        0.000224809 lb·m/(A·ms)
                         
         """
         constr = _get_construction(_parse_unit(self.unit), combine=True)

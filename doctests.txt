@@ -173,3 +173,12 @@ Exception: Too many arguments given: ['2', 'mm', 'in', 'i']
 50.8 mm
 >>> Unit(2580.64,'mm2')/Unit(4, 'in')
 1 in
+>>> -Unit('1 m')
+-1 m
+>>> -Unit('-1 m')
+1 m
+>>> +Unit('-1 m')
+-1 m
+>>> +Unit('1 m')
+1 m
+

@@ -1054,9 +1054,15 @@ class Unit:
     def __int__(self):
         return int(self.value)  # type: ignore
 
-    def __abs__(self, other):
+    def __abs__(self):
         return Unit(abs(self.value), self.unit)  # type: ignore
-
+    
+    def __pos__(self):
+        return self
+    
+    def __neg__(self):
+        return Unit(-self.value, self.unit)  # type: ignore
+    
     def __lt__(self, other):
         if isinstance(other, Unit):
             _check_consistent_units(other.unit, self.unit)

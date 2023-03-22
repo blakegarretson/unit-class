@@ -761,10 +761,7 @@ class Unit:
 
     def __init__(self, *argv):
         self.to_specials = str.maketrans("0123456789*", "⁰¹²³⁴⁵⁶⁷⁸⁹·")
-        self.from_specials = str.maketrans(
-            "⁰¹²³⁴⁵⁶⁷⁸⁹⋅·×",
-            "0123456789***",
-        )
+        self.from_specials = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹⋅·×", "0123456789***")
 
         value = None
         unit = ''
@@ -1005,7 +1002,7 @@ class Unit:
         new_constr = _get_construction(_parse_unit(newunit))
         self_constr = self._get_construction()
         other_constr = other._get_construction()
-        u = Unit(newvalue, newunit or other.unit)
+        u = Unit(newvalue, newunit)
         if new_constr == self_constr:
             u.to(self.unit)
         elif new_constr == other_constr:
@@ -1110,7 +1107,11 @@ if __name__ == '__main__':
     doctest.testmod()
     doctest.testfile('doctests.txt')
     doctest.testfile('README.md', optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)
+
     # print(Unit(4, 'in2')/Unit(50.8,'mm'))
     # print(Unit(50.8,'mm2')/Unit(4, 'in'))
-    # print(4/Unit('2'))
+    # print(4/Unit('2 m'))
+    # print(Unit('4 m')/Unit('2 m'))
+    # print(Unit('4 m')/2)
+    # print(Unit('4 m2')/Unit('2 m'))
     # print(Unit(50.8,'mm')*Unit(4, 'in'))

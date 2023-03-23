@@ -181,4 +181,13 @@ Exception: Too many arguments given: ['2', 'mm', 'in', 'i']
 -1 m
 >>> +Unit('1 m')
 1 m
-
+>>> 1 + (Unit(1, 'm')/Unit(1, 'm'))
+2
+>>> Unit(1, 'in') + (Unit(1, 'm')/Unit(1, 'm'))
+2 in
+>>> (Unit(1, 'm')/Unit(1, 'm')) + 1
+2
+>>> (Unit(1, 'm')/Unit(1, 'm')) + Unit(1, 'in')
+2 in
+>>> (Unit(1, 'in')/Unit(1, 'in')) + Unit(1, 'in')
+2 in

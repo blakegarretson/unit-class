@@ -335,7 +335,6 @@ def _parse_unit(text, numerator=None, denominator=None, divflip=False, expand=Tr
     if not denominator:
         denominator = []
     text = text.strip()
-    # print("CALL",text, numerator, denominator)
     if divflip:
         numerator, denominator = denominator, numerator
 
@@ -345,7 +344,6 @@ def _parse_unit(text, numerator=None, denominator=None, divflip=False, expand=Tr
         op = match.group(4)
         term2 = match.group(5)
         term2_parens = match.group(6)
-        # print(text, '>>>', op, term1, term2, term2_parens, parens, match.span(), numerator, denominator)
 
         if op == '*':
             end = match.end()
@@ -618,6 +616,12 @@ def convert(value, from_unit, to_unit):
     Special cases include temperature
     """
     # TODO: this doesn't handle compound units with temperature, like J/degC
+    
+    if (not to_unit) and (from_unit != '%'): # unitless, treat as same unit
+        return value
+    elif (not from_unit) and (to_unit != '%'): # unitless, treat as same unit
+        return value
+
     both = _get_unit_name(from_unit, ignore_error=True) + \
         _get_unit_name(to_unit, ignore_error=True)
     if both == '°C°F':
@@ -1015,11 +1019,12 @@ class Unit:
     def __add__(self, other):
         if isinstance(other, Unit):
             _check_consistent_units(other.unit, self.unit)
+            newunit = self.unit or other.unit
             other = convert(other.value, other.unit, self.unit)
+        else:
+            newunit = self.unit
         newvalue = self.value + other
-        if (not self.unit) and (not isinstance(other, Unit)):
-            return Unit(newvalue, '')
-        return Unit(newvalue, self.unit or other.unit)
+        return Unit(newvalue, newunit)
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -1027,20 +1032,22 @@ class Unit:
     def __sub__(self, other):
         if isinstance(other, Unit):
             _check_consistent_units(other.unit, self.unit)
+            newunit = self.unit or other.unit
             other = convert(other.value, other.unit, self.unit)
+        else:
+            newunit = self.unit
         newvalue = self.value - other
-        if (not self.unit) and (not isinstance(other, Unit)):
-            return Unit(newvalue, '')
-        return Unit(newvalue, self.unit or other.unit)
+        return Unit(newvalue, newunit)
 
     def __rsub__(self, other):
         if isinstance(other, Unit):
             _check_consistent_units(other.unit, self.unit)
+            newunit = self.unit or other.unit
             other = convert(other.value, other.unit, self.unit)
+        else:
+            newunit = self.unit
         newvalue = other - self.value
-        if (not self.unit) and (not isinstance(other, Unit)):
-            return Unit(newvalue, '')
-        return Unit(newvalue, self.unit or other.unit)
+        return Unit(newvalue, newunit)
 
     def __pow__(self, other):
         return Unit(self.value**other, self._new_unit(other, op="pow"))
@@ -1115,3 +1122,14 @@ if __name__ == '__main__':
     # print(Unit('4 m')/2)
     # print(Unit('4 m2')/Unit('2 m'))
     # print(Unit(50.8,'mm')*Unit(4, 'in'))
+    # print(Unit('1 m')/Unit('1 m'))
+    # print(Unit('1 m')/Unit('1 m') + Unit('1 m'))
+    # print(Unit('1 m') + Unit('1 m')/Unit('1 m'))
+    # a = Unit(1, 'in')
+    # b = Unit(1, 'm')/Unit(1, 'm')
+    # print(a)
+    # print(a.value,'>', a.unit)
+    # print(b)
+    # print(b.value,'>', b.unit)
+    # print(a+b)
+    # print(b+a)

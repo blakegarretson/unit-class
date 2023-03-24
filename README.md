@@ -54,11 +54,11 @@ multiplied units on the left and right sides of the division operator. e.g
 
 ```python
 >>> Unit('1 lbf*ft*s2')
-1 lb⋅ft⋅s²
+1 lb·ft·s²
 >>> Unit(100, 'ft/min')
 100 ft/min
->>> Unit('1 N*s2/m*kg')
-1 N⋅s²/m⋅kg
+>>> Unit('1 N*s2/(m*kg)')
+1 N·s²/(m·kg)
 >>> Unit(100, 'ft') / Unit(1, 'min')
 100 ft/min
 
@@ -76,7 +76,7 @@ multiplied units on the left and right sides of the division operator. e.g
 >>> b.to('mm')
 304.8 mm
 >>> Unit('1 N*m').to('in*lb')
-8.85075 in⋅lb
+8.85075 in·lb
 >>> Unit(100, 'ft/min').to('mph') 
 1.13636 mph
 >>> Unit(100, 'ft/min').to('kph')
@@ -141,7 +141,7 @@ given combination of units. For all options, type `help(Unit.expand)` or
 >>> a
 1 W/A
 >>> a.expand()
-1 N⋅m/A⋅s
+1 N·m/(A·s)
 >>> a.simplify()
 1 V
 

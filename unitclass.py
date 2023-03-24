@@ -18,7 +18,7 @@ unitclass: Physical unit class suitable for calculations in the sciences.
 
 
 """
-import math, csv, numbers
+import math, csv, numbers, re
 
 g = 9.80665  # standard value of accel of gravity
 
@@ -318,13 +318,78 @@ def _expand_units(unitlist):
             newlist.append(u)
     return newlist
 
-
-def _parse_unit(name, expand=True):
-    """Parse unit and break down to indvidual components
+re_oper = re.compile("(^\(.*?\))|(^(.*?)([*|\/])(.*?)(?=(\(.*?\))|[*\/]|$))"
+                     )  # parens group, or next operator
+def _parse_unit(text, numerator=None, denominator=None, divflip=False, expand=True):
+    """Parse unit str and break down to indvidual components, respecting PEMDAS order 
+    of operations and allowing for parentheses.
     e.g.:
 
-    >>> _parse_unit(name='N*m/s*in')
+    >>> _parse_unit('N*m/(s*in)')
     (['N', 'm'], ['s', 'in'])
+
+    expand: will call _expand_units()
+    """    
+    if not numerator:
+        numerator = []
+    if not denominator:
+        denominator = []
+    text = text.strip()
+    if divflip:
+        numerator, denominator = denominator, numerator
+
+    while match := re_oper.search(text):
+        parens = match.group(1)
+        term1 = match.group(3)
+        op = match.group(4)
+        term2 = match.group(5)
+        term2_parens = match.group(6)
+
+        if op == '*':
+            end = match.end()
+            if term1: numerator.append(term1)
+            if term2: numerator.append(term2)
+            elif term2_parens:
+                numerator, denominator = _parse_unit(
+                    term2_parens[1:-1], numerator, denominator, expand=False)
+                end += len(term2_parens)
+            text = text[end:]
+        elif op == '/':
+            end = match.end()
+            if term1: numerator.append(term1)
+            if term2: denominator.append(term2)
+            elif term2_parens:  # flip num/denom since it's being divided
+                numerator, denominator = _parse_unit(term2_parens[1:-1],
+                                                          numerator,
+                                                          denominator,
+                                                          divflip=True, expand=False)
+                end += len(term2_parens)
+            text = text[end:]
+        elif parens:
+            text = text[match.end():]
+            numerator, denominator = _parse_unit(parens[1:][:-1],
+                                                      numerator, denominator, expand=False)
+    if text:  # just a single term left
+        numerator.append(text)
+        text = ''
+    if divflip:
+        numerator, denominator = denominator, numerator
+    if expand:
+        numerator = _expand_units(numerator)
+        denominator = _expand_units(denominator)
+    return numerator, denominator
+
+def _parse_unit_simple(name, expand=True):
+    """Parse unit str and break down to indvidual components
+    e.g.:
+
+    >>> _parse_unit_simple(name='N*m/s*in')
+    (['N', 'm'], ['s', 'in'])
+
+    NOTE: This is a simplified function. It only allows for one
+        divsion operator and does not folow PEMDAS.
+        Everything on the left side of the division operator is multiplied and is the numerator.
+        Everything on the right side of the division operator is multiplied and is the denominator.
 
     expand: will call _expand_units()
     """
@@ -459,7 +524,7 @@ def _make_name(num, denom, combine=True):
     """Takes list of individual units and combines them
 
     You would want to set 'combine' to False if you want an expanded unit, useful for
-    unit types: force/length*length"""
+    unit types: force/(length*length)"""
     new_num, new_denom = _simplify_unit(num, denom)
     if combine:
         new_num, new_denom = _combine_units(new_num), _combine_units(new_denom)
@@ -471,7 +536,10 @@ def _make_name(num, denom, combine=True):
     elif denom_str == '':
         new_unit = num_str
     else:
-        new_unit = "/".join([num_str, denom_str])
+        if len(new_denom) > 1:
+            new_unit = f"{num_str}/({denom_str})" # parens
+        else:
+            new_unit = f"{num_str}/{denom_str}"
     return new_unit
 
 
@@ -548,6 +616,12 @@ def convert(value, from_unit, to_unit):
     Special cases include temperature
     """
     # TODO: this doesn't handle compound units with temperature, like J/degC
+    
+    if (not to_unit) and (from_unit != '%'): # unitless, treat as same unit
+        return value
+    elif (not from_unit) and (to_unit != '%'): # unitless, treat as same unit
+        return value
+
     both = _get_unit_name(from_unit, ignore_error=True) + \
         _get_unit_name(to_unit, ignore_error=True)
     if both == '°C°F':
@@ -690,11 +764,8 @@ class Unit:
     """
 
     def __init__(self, *argv):
-        self.to_specials = str.maketrans("0123456789*", "⁰¹²³⁴⁵⁶⁷⁸⁹⋅")
-        self.from_specials = str.maketrans(
-            "⁰¹²³⁴⁵⁶⁷⁸⁹⋅×",
-            "0123456789**",
-        )
+        self.to_specials = str.maketrans("0123456789*", "⁰¹²³⁴⁵⁶⁷⁸⁹·")
+        self.from_specials = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹⋅·×", "0123456789***")
 
         value = None
         unit = ''
@@ -709,7 +780,7 @@ class Unit:
                 value = arg.value
             elif isinstance(arg, (float,int)): # -> 1
                 value = arg
-            elif isinstance(arg, str): # -> '1' or 'mm'
+            elif isinstance(arg, str): # -> '1' or 'mm' or '1 mm' or '1 mm in'
                 items = arg.split()
                 if len(items) == 1:
                     item = items[0]
@@ -750,7 +821,7 @@ class Unit:
         - if one of the Unit objects was unitless, it removes the empty string from the name
         - Returns primary name (after replacements)
         """
-        return _get_unit_name(unit_str.translate(self.from_specials))
+        return _get_unit_name(unit_str.translate(self.from_specials).replace('^','').replace('**',''))
 
     def _tocopy(self, newunit):
         """Converts and returns a new Unit() copy"""
@@ -825,9 +896,9 @@ class Unit:
         >>> a
         1 W/A
         >>> a.expand()
-        1 N⋅m/A⋅s
+        1 N·m/(A·s)
         >>> a.expand(time='ms', force='lb')
-        0.000224809 lb⋅m/A⋅ms
+        0.000224809 lb·m/(A·ms)
                         
         """
         constr = _get_construction(_parse_unit(self.unit), combine=True)
@@ -935,7 +1006,7 @@ class Unit:
         new_constr = _get_construction(_parse_unit(newunit))
         self_constr = self._get_construction()
         other_constr = other._get_construction()
-        u = Unit(newvalue, newunit or other.unit)
+        u = Unit(newvalue, newunit)
         if new_constr == self_constr:
             u.to(self.unit)
         elif new_constr == other_constr:
@@ -948,11 +1019,12 @@ class Unit:
     def __add__(self, other):
         if isinstance(other, Unit):
             _check_consistent_units(other.unit, self.unit)
+            newunit = self.unit or other.unit
             other = convert(other.value, other.unit, self.unit)
+        else:
+            newunit = self.unit
         newvalue = self.value + other
-        if (not self.unit) and (not isinstance(other, Unit)):
-            return Unit(newvalue, '')
-        return Unit(newvalue, self.unit or other.unit)
+        return Unit(newvalue, newunit)
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -960,20 +1032,22 @@ class Unit:
     def __sub__(self, other):
         if isinstance(other, Unit):
             _check_consistent_units(other.unit, self.unit)
+            newunit = self.unit or other.unit
             other = convert(other.value, other.unit, self.unit)
+        else:
+            newunit = self.unit
         newvalue = self.value - other
-        if (not self.unit) and (not isinstance(other, Unit)):
-            return Unit(newvalue, '')
-        return Unit(newvalue, self.unit or other.unit)
+        return Unit(newvalue, newunit)
 
     def __rsub__(self, other):
         if isinstance(other, Unit):
             _check_consistent_units(other.unit, self.unit)
+            newunit = self.unit or other.unit
             other = convert(other.value, other.unit, self.unit)
+        else:
+            newunit = self.unit
         newvalue = other - self.value
-        if (not self.unit) and (not isinstance(other, Unit)):
-            return Unit(newvalue, '')
-        return Unit(newvalue, self.unit or other.unit)
+        return Unit(newvalue, newunit)
 
     def __pow__(self, other):
         return Unit(self.value**other, self._new_unit(other, op="pow"))
@@ -984,9 +1058,15 @@ class Unit:
     def __int__(self):
         return int(self.value)  # type: ignore
 
-    def __abs__(self, other):
+    def __abs__(self):
         return Unit(abs(self.value), self.unit)  # type: ignore
-
+    
+    def __pos__(self):
+        return self
+    
+    def __neg__(self):
+        return Unit(-self.value, self.unit)  # type: ignore
+    
     def __lt__(self, other):
         if isinstance(other, Unit):
             _check_consistent_units(other.unit, self.unit)
@@ -1034,7 +1114,22 @@ if __name__ == '__main__':
     doctest.testmod()
     doctest.testfile('doctests.txt')
     doctest.testfile('README.md', optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)
+
     # print(Unit(4, 'in2')/Unit(50.8,'mm'))
     # print(Unit(50.8,'mm2')/Unit(4, 'in'))
-    # print(4/Unit('2'))
+    # print(4/Unit('2 m'))
+    # print(Unit('4 m')/Unit('2 m'))
+    # print(Unit('4 m')/2)
+    # print(Unit('4 m2')/Unit('2 m'))
     # print(Unit(50.8,'mm')*Unit(4, 'in'))
+    # print(Unit('1 m')/Unit('1 m'))
+    # print(Unit('1 m')/Unit('1 m') + Unit('1 m'))
+    # print(Unit('1 m') + Unit('1 m')/Unit('1 m'))
+    # a = Unit(1, 'in')
+    # b = Unit(1, 'm')/Unit(1, 'm')
+    # print(a)
+    # print(a.value,'>', a.unit)
+    # print(b)
+    # print(b.value,'>', b.unit)
+    # print(a+b)
+    # print(b+a)

@@ -10,7 +10,7 @@
 >>> Unit(10, 'lb', 'kg')
 4.53592 kg
 >>> Unit(10, 'in*lb', 'N*m')
-1.12985 N⋅m
+1.12985 N·m
 >>> a = Unit('1 W')/Unit('1 A')
 >>> a
 1 W/A
@@ -20,7 +20,7 @@
 >>> a
 1 W/A
 >>> a.expand()
-1 N⋅m/A⋅s
+1 N·m/(A·s)
 >>> a.simplify()
 1 V
 >>> a = Unit('1 W')/Unit('1 A')
@@ -77,10 +77,14 @@ Exception: No arguments given for Unit.
 640.739 kg/m³
 >>> Unit(40, 'pcf', 'lb/ft3')
 40 lb/ft³
+>>> Unit(40, 'pcf', 'lb/ft^3')
+40 lb/ft³
 >>> Unit(40, 'pcf', 'kg/m3')
 640.739 kg/m³
 >>> Unit(1, 'cup', 'tbsp')
 16 tbsp
+>>> Unit(1, 'mL', 'cm^3')
+1 cm³
 >>> Unit(1, 'mL', 'cm3')
 1 cm³
 >>> Unit(1, 'gmi', 'nmi')
@@ -169,3 +173,21 @@ Exception: Too many arguments given: ['2', 'mm', 'in', 'i']
 50.8 mm
 >>> Unit(2580.64,'mm2')/Unit(4, 'in')
 1 in
+>>> -Unit('1 m')
+-1 m
+>>> -Unit('-1 m')
+1 m
+>>> +Unit('-1 m')
+-1 m
+>>> +Unit('1 m')
+1 m
+>>> 1 + (Unit(1, 'm')/Unit(1, 'm'))
+2
+>>> Unit(1, 'in') + (Unit(1, 'm')/Unit(1, 'm'))
+2 in
+>>> (Unit(1, 'm')/Unit(1, 'm')) + 1
+2
+>>> (Unit(1, 'm')/Unit(1, 'm')) + Unit(1, 'in')
+2 in
+>>> (Unit(1, 'in')/Unit(1, 'in')) + Unit(1, 'in')
+2 in

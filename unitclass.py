@@ -345,7 +345,7 @@ def _parse_unit(text, numerator=None, denominator=None, divflip=False, expand=Tr
         term2 = match.group(5)
         term2_parens = match.group(6)
 
-        if op == '*':
+        if op in ('*','×','·','•','⋅'):
             end = match.end()
             if term1: numerator.append(term1)
             if term2: numerator.append(term2)
@@ -354,7 +354,7 @@ def _parse_unit(text, numerator=None, denominator=None, divflip=False, expand=Tr
                     term2_parens[1:-1], numerator, denominator, expand=False)
                 end += len(term2_parens)
             text = text[end:]
-        elif op == '/':
+        elif op in ('/','÷'):
             end = match.end()
             if term1: numerator.append(term1)
             if term2: denominator.append(term2)
@@ -378,35 +378,6 @@ def _parse_unit(text, numerator=None, denominator=None, divflip=False, expand=Tr
         numerator = _expand_units(numerator)
         denominator = _expand_units(denominator)
     return numerator, denominator
-
-def _parse_unit_simple(name, expand=True):
-    """Parse unit str and break down to indvidual components
-    e.g.:
-
-    >>> _parse_unit_simple(name='N*m/s*in')
-    (['N', 'm'], ['s', 'in'])
-
-    NOTE: This is a simplified function. It only allows for one
-        divsion operator and does not folow PEMDAS.
-        Everything on the left side of the division operator is multiplied and is the numerator.
-        Everything on the right side of the division operator is multiplied and is the denominator.
-
-    expand: will call _expand_units()
-    """
-    fractional = name.split("/")
-    if len(fractional) == 1:
-        num = fractional[0].split("*")
-        denom = []
-    else:
-        num, denom = fractional
-        num, denom = num.split("*"), denom.split("*")
-
-    if expand:
-        num = _expand_units(num)
-        denom = _expand_units(denom)
-
-    return num, denom
-
 
 def _get_unit(unit):
     """Returns unit dict, handling aliases too"""

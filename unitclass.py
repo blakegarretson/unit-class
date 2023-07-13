@@ -68,6 +68,7 @@ _quantities = {
     # Other special purpose
     'concentration': [['unitless'], []],
     'data': [['data'], []],
+    'currency': [['currency'], []],
     # SI
     'mass': [['force', 'time', 'time'], ['length']],  # force/acceleration
     'energy': [['force', 'length'], []],
@@ -282,6 +283,11 @@ _unit_list = [
     ('data', 'TB', 'terabyte terabytes', 1024, 'GB'),
     ('data', 'PB', 'petabyte petabytes', 1024, 'TB'),
     ('data', 'EB', 'exabyte exabytes', 1024, 'PB'),
+    ('currency', 'USD', 'dollars dollar usdollar', 1, ''),
+    ('currency', 'pennies', 'penny', 0.01, 'USD'),
+    ('currency', 'nickels', 'nickel', 0.05, 'USD'),
+    ('currency', 'dimes', 'dime', 0.10, 'USD'),
+    ('currency', 'quarters', 'quarter', 0.25, 'USD'),
     ('speed', 'mph', 'mileperhour', 1, 'mi/hr'),
     ('speed', 'kph', 'kmperhour', 1, 'km/hr'),
     ('speed', 'c', 'lightspeed', 299792458, 'm/s'),
@@ -752,7 +758,11 @@ class Unit:
             elif isinstance(arg, (float,int)): # -> 1
                 value = arg
             elif isinstance(arg, str): # -> '1' or 'mm' or '1 mm' or '1 mm in'
-                items = arg.split()
+                if arg.startswith('$'):
+                    items = arg[1:].split()
+                    items = [items[0], 'USD']+items[1:]
+                else:
+                    items = arg.split()
                 if len(items) == 1:
                     item = items[0]
                     if all([(i in '0123456789-+.') for i in item]): # is number
@@ -908,8 +918,13 @@ class Unit:
 
     def __format__(self, format_spec):
         unit_str = self.unit.translate(self.to_specials)
+        prefix = ''
+        if 'USD' in unit_str:
+            prefix = '$'
+            unit_str = unit_str.replace('USD','')
+            format_spec = '.2f'
         number = "{r:{f}}".format(r=self.value, f=format_spec)
-        return "{} {}".format(number, unit_str).strip()
+        return "{}{} {}".format(prefix, number, unit_str).strip()
 
     def _true_repr(self):
         """
@@ -943,7 +958,11 @@ class Unit:
         """
         if isinstance(self.value, numbers.Number):
             unit_str = self.unit.translate(self.to_specials)
-            return "{:g} {}".format(self.value, unit_str).strip()
+            prefix = ''
+            if 'USD' in unit_str:
+                prefix = '$'
+                unit_str = unit_str.replace('USD','')
+            return "{}{:g} {}".format(prefix,self.value, unit_str).strip()
         else:
             return ""
 
@@ -1090,7 +1109,11 @@ if __name__ == '__main__':
     # print(Unit(50.8,'mm2')/Unit(4, 'in'))
     # print(4/Unit('2 m'))
     # print(Unit('4 m')/Unit('2 m'))
-    # print(Unit('4 m')/2)
+    print(Unit('1 USD'))
+    print(Unit('$1.00'))
+    print("{:.10g}".format(Unit('1.00 USD/sqft')))
+    # print(Unit('1 USD')/Unit('sqft'))
+    # print(Unit('1 USD').to('pennies'))
     # print(Unit('4 m2')/Unit('2 m'))
     # print(Unit(50.8,'mm')*Unit(4, 'in'))
     # print(Unit('1 m')/Unit('1 m'))

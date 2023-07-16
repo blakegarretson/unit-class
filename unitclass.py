@@ -565,9 +565,7 @@ def _check_consistent_units(from_unit, to_unit, silent=False):
     to_constr = _get_construction(_parse_unit(to_unit))
     from_constr = _get_construction(_parse_unit(from_unit))
     if to_constr != from_constr:
-        errstr = f"Error: Units are not consistent.\n" +\
-            f"       {from_unit} is {from_constr}\n" +\
-            f"       {to_unit} is {to_constr}"
+        errstr = f"Inconsistent units: {from_unit} is {from_constr}, {to_unit} is {to_constr}"
         if not silent:
             raise InconsistentUnitsError(errstr)
         else:

@@ -113,9 +113,16 @@ _defaults = {}
 _signatures = {}
 
 
-def _gen_signature(constr):
+def _gen_signature(constr, commonize_forcemass=False):
     """Returns stable identifier/signature for any construction"""
     num, denom = constr
+    if commonize_forcemass:
+        num = [i.replace(
+            'force', 'FORCEorMASS').replace(
+            'mass', 'FORCEorMASS') for i in num]
+        denom = [i.replace(
+            'force', 'FORCEorMASS').replace(
+            'mass', 'FORCEorMASS') for i in denom]
     num = ".".join(sorted(num))
     denom = ".".join(sorted(denom))
     sig = f'{num}|{denom}'
@@ -339,7 +346,7 @@ re_oper = re.compile("(^\(.*?\))|(^(.*?)([*|\/])(.*?)(?=(\(.*?\))|[*\/]|$))"
 
 
 def _parse_unit(text, numerator=None, denominator=None, divflip=False, expand=True):
-    """Parse unit str and break down to indvidual components, respecting PEMDAS order 
+    """Parse unit str and break down to indvidual components, respecting PEMDAS order
     of operations and allowing for parentheses.
     e.g.:
 
@@ -592,22 +599,28 @@ def _check_consistent_units(from_unit, to_unit, silent=False, handle_mass_conver
     from_unit_parsed = _parse_unit(from_unit)
     to_constr = _get_construction(to_unit_parsed)
     from_constr = _get_construction(from_unit_parsed)
+    # print(from_constr,to_constr)
     if to_constr != from_constr:
         throw_error = False
         if handle_mass_conversion:
             # count mass and force and make sure they are balanced
             # to_constr_list = _get_construction(to_unit_parsed,listform=True)
             # from_constr_list = _get_construction(from_unit_parsed,listform=True)
-            
+
             # get qty for each unit
             # to_qty = [[_units[i]['qty'] for i in lst] for lst in to_unit_parsed]
             # from_qty = [[_units[i]['qty'] for i in lst] for lst in from_unit_parsed]
             to_qty = _get_construction(to_unit_parsed, listform=True, retain_force=True)
             from_qty = _get_construction(from_unit_parsed, listform=True, retain_force=True)
+            # print(from_qty,to_qty)
             to_count = [(lst.count('mass'), lst.count('force')) for lst in to_qty]
             from_count = [(lst.count('force'), lst.count('mass')) for lst in from_qty]
+            to_constr_common = _gen_signature(to_qty, commonize_forcemass=True)
+            from_constr_common = _gen_signature(from_qty, commonize_forcemass=True)
+            # print(to_count,from_count)
+            # print(to_constr_common,from_constr_common)
             # check if difference is just mass and force
-            if to_count != from_count:
+            if (to_count != from_count) or (to_constr_common != from_constr_common):
                 throw_error = True
             else:
                 return from_count
@@ -716,10 +729,10 @@ def list_units(qty=[], search=''):
 def _build_import_funcs():
     """
     Create a dictionary of functions that are allowed to be used in equations
-    in imported CSV files. Most math fuctions from the math module and some 
+    in imported CSV files. Most math fuctions from the math module and some
     from __builtins__ are allowed, and everything else is forbidden.
 
-    Used in conjunction with _import_units() function which actually reads the 
+    Used in conjunction with _import_units() function which actually reads the
     CSV and does the eval().
     """
     available_funcs = {}
@@ -791,16 +804,16 @@ class Unit:
 
     Usage:
     Create Unit w/
-        String: 
+        String:
             Unit("1 N*m")
             Unit("3.4 mi/hr")
-        Int/Float & Str: 
+        Int/Float & Str:
             Unit(1, "N*m")
             Unit(3.4, "mi/hr")
         Create unit and convert:
             Unit(3.4, "mi/hr", "km/hr")
             Unit("3.4 mi/hr km/hr")
-        Create & convert w/ method: 
+        Create & convert w/ method:
             Unit(3.4, "mi/hr").to("km/hr")
     """
 
@@ -996,15 +1009,15 @@ class Unit:
 
     def _true_repr(self):
         """
-        This is the true __repr__ method that returns a representation that can 
+        This is the true __repr__ method that returns a representation that can
         reconstruct the object. e.g.:
 
         >>> Unit('2 mm')._true_repr()
         "Unit(2, 'mm')"
 
-        The __repr__ method should really be the __str__ method, but this is library is 
-        intended to be used as an interactive calculator from the REPL, so the str() 
-        output is desired without using print() from the REPL. If you really want the 
+        The __repr__ method should really be the __str__ method, but this is library is
+        intended to be used as an interactive calculator from the REPL, so the str()
+        output is desired without using print() from the REPL. If you really want the
         conventional __repr__ output, this method will do it.
 
         """
@@ -1210,6 +1223,7 @@ if __name__ == '__main__':
     # print(Unit('1 pcf').to('kg/m3'))
     # print(Unit('40 pcf').to('kg/m3'))
     # print(Unit('40 pcf').to('lb/ft3'))
+    # print(Unit('1 m2').to('ft'))
     # print(Unit('640 kg/m3').to('lb/ft3'))
     # b = Unit(1, 'm')/Unit(1, 'm')
     # print(a)

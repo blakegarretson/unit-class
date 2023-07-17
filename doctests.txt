@@ -191,3 +191,7 @@ Exception: Too many arguments given: ['2', 'mm', 'in', 'i']
 2 in
 >>> (Unit(1, 'in')/Unit(1, 'in')) + Unit(1, 'in')
 2 in
+>>> Unit('1 m2').to('ft')
+Traceback (most recent call last):
+...
+unitclass.InconsistentUnitsError: Inconsistent units: m2 is length*length, ft is length

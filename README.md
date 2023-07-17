@@ -229,11 +229,8 @@ You can skip creating a Unit class if you prefer to just do a quick conversion.
 
 ### Force/Mass
 
-One huge compromise was made in the design of the unit system. Because people
-expect to convert from pounds to kilograms (i.e. force to mass), this library
-designates force as a fundmental unit instead of mass. Mass is defined in terms
-of force and acceleration of gravity. While this differs from the official SI
-Base Units, it makes conversion between force and mass intuitive for the layman
+Because people expect to convert from pounds to kilograms (i.e. force to mass), this library
+will automatically handle conversion to/from forces and masses when explicit conversion is requested. This is accomplished by dividing or multiplying by the acceleration of gravity as needed, which makes conversion between force and mass intuitive for the layman
 and convenient for the rest.
 
 ### Temperature

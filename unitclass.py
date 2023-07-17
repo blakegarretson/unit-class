@@ -540,7 +540,7 @@ def _make_name(num, denom, combine=True):
     return new_unit
 
 
-def _get_construction(fractional_unit, combine=False, listform=False):
+def _get_construction(fractional_unit, combine=False, listform=False, retain_force=False):
     """Reduce the units down to the fundamental quantities (length, mass, time, etc.)
     This should be used with the _parse_unit() function to split
     the unit into fractional parts and pass the pair into this function.
@@ -551,17 +551,19 @@ def _get_construction(fractional_unit, combine=False, listform=False):
     new_num_constr = []
     new_denom_constr = []
     for u in num_constr:
-        if u in _quantities:
+        if retain_force and (u == 'force'):
+            new_num_constr.append(u)
+        elif u in _quantities:
             n, d = _quantities[u]
-            # num_constr.remove(u)
             new_num_constr.extend(n)
             new_denom_constr.extend(d)
         else:
             new_num_constr.append(u)
     for u in denom_constr:
-        if u in _quantities:
+        if retain_force and (u == 'force'):
+            new_denom_constr.append(u)
+        elif u in _quantities:
             n, d = _quantities[u]
-            # denom_constr.remove(u)
             new_num_constr.extend(d)
             new_denom_constr.extend(n)
         else:
@@ -596,8 +598,12 @@ def _check_consistent_units(from_unit, to_unit, silent=False, handle_mass_conver
             # count mass and force and make sure they are balanced
             # to_constr_list = _get_construction(to_unit_parsed,listform=True)
             # from_constr_list = _get_construction(from_unit_parsed,listform=True)
-            to_qty = [[_units[i]['qty'] for i in lst] for lst in to_unit_parsed]
-            from_qty = [[_units[i]['qty'] for i in lst] for lst in from_unit_parsed]
+            
+            # get qty for each unit
+            # to_qty = [[_units[i]['qty'] for i in lst] for lst in to_unit_parsed]
+            # from_qty = [[_units[i]['qty'] for i in lst] for lst in from_unit_parsed]
+            to_qty = _get_construction(to_unit_parsed, listform=True, retain_force=True)
+            from_qty = _get_construction(from_unit_parsed, listform=True, retain_force=True)
             to_count = [(lst.count('mass'), lst.count('force')) for lst in to_qty]
             from_count = [(lst.count('force'), lst.count('mass')) for lst in from_qty]
             # check if difference is just mass and force
@@ -935,9 +941,9 @@ class Unit:
         >>> a
         1 W/A
         >>> a.expand()
-        1 N·m/(A·s)
-        >>> a.expand(time='ms', mass='kg')
-        0.000224809 lb·m/(A·ms)
+        1 m²·kg/(A·s³)
+        >>> a.expand(time='ms', mass='g', length='mm')
+        1 mm²·g/(A·ms³)
 
         """
         # self.simplify()
@@ -1167,10 +1173,10 @@ __all__ = [
 
 if __name__ == '__main__':
     pass
-    # import doctest
-    # doctest.testmod()
-    # doctest.testfile('doctests.txt')
-    # doctest.testfile('README.md', optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)
+    import doctest
+    doctest.testmod()
+    doctest.testfile('doctests.txt')
+    doctest.testfile('README.md', optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)
 
     # print(Unit(4, 'in2')/Unit(50.8,'mm'))
     # print(Unit(50.8,'mm2')/Unit(4, 'in'))
@@ -1201,9 +1207,10 @@ if __name__ == '__main__':
     # print(Unit('1 ton').to('kg'))
     # print(Unit('1 ton').to('lb'))
     # print(Unit('1 N*m').to('in*lb'))
-    print(Unit('1 pcf').to('kg/m3'))
-    print(Unit('40 pcf').to('kg/m3'))
-    print(Unit('40 pcf').to('lb/ft3'))
+    # print(Unit('1 pcf').to('kg/m3'))
+    # print(Unit('40 pcf').to('kg/m3'))
+    # print(Unit('40 pcf').to('lb/ft3'))
+    # print(Unit('640 kg/m3').to('lb/ft3'))
     # b = Unit(1, 'm')/Unit(1, 'm')
     # print(a)
     # print(a.value,'>', a.unit)

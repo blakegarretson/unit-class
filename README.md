@@ -141,7 +141,7 @@ given combination of units. For all options, type `help(Unit.expand)` or
 >>> a
 1 W/A
 >>> a.expand()
-1 N·m/(A·s)
+1 m²·kg/(A·s³)
 >>> a.simplify()
 1 V
 

@@ -998,7 +998,7 @@ class Unit:
                 self.to(new_unit)
         return self
 
-    def __format__(self, format_spec):
+    def __format__(self, format_spec='g'):
         unit_str = self.unit.translate(self.to_specials)
         prefix = ''
         if 'USD' in unit_str:
@@ -1006,7 +1006,11 @@ class Unit:
             unit_str = unit_str.replace('USD', '')
             format_spec = '.2f'
         number = "{r:{f}}".format(r=self.value, f=format_spec)
-        return "{}{} {}".format(prefix, number, unit_str).strip()
+        if unit_str and (unit_str in no_space_units): 
+            space = ''
+        else:
+            space = ' '
+        return "{}{}{}{}".format(prefix, number, space, unit_str).strip()
 
     def _true_repr(self):
         """
@@ -1039,15 +1043,7 @@ class Unit:
 
         """
         if isinstance(self.value, numbers.Number):
-            unit_str = self.unit.translate(self.to_specials)
-            prefix = ''
-            if 'USD' in unit_str:
-                prefix = '$'
-                unit_str = unit_str.replace('USD', '')
-            if unit_str and (unit_str in no_space_units):
-                return "{}{:g}{}".format(prefix, self.value, unit_str).strip()
-            else:
-                return "{}{:g} {}".format(prefix, self.value, unit_str).strip()
+            return self.__format__()
         else:
             return ""
 

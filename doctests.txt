@@ -36,7 +36,7 @@
 2 blake
 >>> uc.import_units('customunits.csv')
 >>> Unit(1, 'myang', 'degrees')
--0.0140334 °
+-0.0140334°
 >>> Unit('2')**4
 16
 >>> Unit('2')*4
@@ -112,7 +112,7 @@ Exception: No arguments given for Unit.
 >>> Unit(0, 'degF', 'degC')
 -17.7778 °C
 >>> Unit(0, 'degC', 'degK')
-273.15 °K
+273.15 K
 >>> Unit(0, 'degC', 'degK').to('celsius')
 0 °C
 >>> Unit(1, 'g', 'lbf').to('N')
@@ -122,9 +122,9 @@ Exception: No arguments given for Unit.
 >>> Unit(1, 'grams')
 1 g
 >>> Unit(2*math.pi, 'rad', 'deg')
-360 °
+360°
 >>> Unit(2*math.pi, 'rad', '°')
-360 °
+360°
 >>> Unit(180, '°', 'radians')
 3.14159 rad
 >>> Unit(1, 'GB', 'MB')
@@ -164,9 +164,9 @@ Exception: Too many arguments given: ['2', 'mm', 'in', 'i']
 >>> Unit('100 %').to('')
 1
 >>> Unit(0.01).to("%")
-1 %
+1%
 >>> Unit(0.9).to("pct")
-90 %
+90%
 >>> Unit(2, 'in') * Unit(50.8,'mm')
 4 in²
 >>> Unit(4, 'in2')/Unit(50.8,'mm')

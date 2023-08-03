@@ -147,7 +147,7 @@ _unit_list = [
     ('time', 's', 'second seconds sec secs', 1, ''),
     ('length', 'm', 'meter meters metre metres', 1, ''),
     ('current', 'A', 'ampere amperes amp amps', 1, ''),
-    ('temperature', '°K', 'K kelvin Kelvin degK', 1, ''),
+    ('temperature', 'K', '°K kelvin Kelvin degK', 1, ''),
     ('amount', 'mol', 'mols mole moles', 1, ''),
     ('luminous_intensity', 'cd', 'candela candelas', 1, ''),
     ('energy', 'J', 'joule joules ', 1, ''),
@@ -327,6 +327,7 @@ _prefixes = list("EPTGMkdcmμnpf")
 _prefix_aliases = ['exa', 'peta', 'tera', 'giga', 'mega', 'kilo',
                    'deci', 'centi', 'milli', 'micro', 'nano', 'pico', 'femto']
 
+no_space_units = ['°', '%']
 
 def _expand_units(unitlist):
     """Take a list of units and return a list with exponents
@@ -670,13 +671,13 @@ def convert(value, from_unit, to_unit):
         newvalue = _convert_C2F(value)
     elif both == '°F°C':
         newvalue = _convert_F2C(value)
-    elif both == '°K°C':
+    elif both == 'K°C':
         newvalue = _convert_K2C(value)
-    elif both == '°C°K':
+    elif both == '°CK':
         newvalue = _convert_C2K(value)
-    elif both == '°F°K':
+    elif both == '°FK':
         newvalue = _convert_C2K(_convert_F2C(value))
-    elif both == '°K°F':
+    elif both == 'K°F':
         newvalue = _convert_C2F(_convert_K2C(value))
     else:
         forcemass_counts = _check_consistent_units(from_unit, to_unit, handle_mass_conversion=True)
@@ -1043,7 +1044,10 @@ class Unit:
             if 'USD' in unit_str:
                 prefix = '$'
                 unit_str = unit_str.replace('USD', '')
-            return "{}{:g} {}".format(prefix, self.value, unit_str).strip()
+            if unit_str and (unit_str in no_space_units):
+                return "{}{:g}{}".format(prefix, self.value, unit_str).strip()
+            else:
+                return "{}{:g} {}".format(prefix, self.value, unit_str).strip()
         else:
             return ""
 

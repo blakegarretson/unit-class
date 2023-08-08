@@ -297,6 +297,7 @@ _unit_list = [
     ('data', 'PB', 'petabyte petabytes', 1024, 'TB'),
     ('data', 'EB', 'exabyte exabytes', 1024, 'PB'),
     ('currency', 'USD', 'dollars dollar usdollar', 1, ''),
+    ('currency', 'cents', 'cent', 0.01, 'USD'),
     ('currency', 'pennies', 'penny', 0.01, 'USD'),
     ('currency', 'nickels', 'nickel', 0.05, 'USD'),
     ('currency', 'dimes', 'dime', 0.10, 'USD'),
@@ -1004,7 +1005,8 @@ class Unit:
         if 'USD' in unit_str:
             prefix = '$'
             unit_str = unit_str.replace('USD', '')
-            format_spec = '.2f'
+            if 'g' in format_spec: # format money to 2 decimals unless a specific fixed format is requested
+                format_spec = '.2f'
         number = "{r:{f}}".format(r=self.value, f=format_spec)
         if unit_str and (unit_str in no_space_units): 
             space = ''
